@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Android build outputs & IDE caches
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/local.properties
+android/.cxx/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log

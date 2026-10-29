@@ -1,0 +1,31 @@
+{
+  "name": "velvet-rain",
+  "version": "1.0.0",
+  "description": "VelvetRain — Ambient Sleep, Rain & Focus Sound Mixer",
+  "main": "index.html",
+  "scripts": {
+    "start": "node server.js",
+    "build": "node build.js",
+    "generate-icons": "node generate-icons.js",
+    "cap:sync": "node build.js && npx.cmd cap sync android",
+    "cap:android": "npx.cmd cap open android",
+    "cap:ios": "npx.cmd cap open ios"
+  },
+  "keywords": [
+    "white-noise",
+    "ambient-sounds",
+    "sleep-aid",
+    "rain-sounds",
+    "binaural-beats",
+    "focus-audio",
+    "offline-sleep-mixer"
+  ],
+  "author": "Velvet Labs",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2"
+  }
+}
