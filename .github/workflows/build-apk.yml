@@ -35,6 +35,22 @@ jobs:
       - name: Sync Capacitor Android Project
         run: npx cap sync android
 
+      - name: Generate or Verify Release Keystore
+        run: |
+          if [ ! -f android/app/release.keystore ]; then
+            echo "Generating release keystore..."
+            keytool -genkeypair -v -keystore android/app/release.keystore \
+              -alias velvetrain \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass VelvetRain2026! \
+              -keypass VelvetRain2026! \
+              -dname "CN=Pegaxion, OU=Pegaxion, O=Pegaxion, L=Mumbai, ST=Maharashtra, C=IN"
+          else
+            echo "Release keystore already exists."
+          fi
+
       - name: Build Android App Bundle (AAB) & Debug APK
         working-directory: ./android
         run: |
@@ -47,6 +63,13 @@ jobs:
           name: VelvetRain-Release-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 14
+
+      - name: Upload Release Keystore (Backup for Future Updates)
+        uses: actions/upload-artifact@v4
+        with:
+          name: VelvetRain-Release-Keystore
+          path: android/app/release.keystore
+          retention-days: 90
 
       - name: Upload Debug APK (For Direct Phone Testing)
         uses: actions/upload-artifact@v4

@@ -11,6 +11,10 @@ android/app/*.iml
 android/local.properties
 android/.cxx/
 
+# Build artifacts
+*.apk
+*.aab
+
 # OS files
 .DS_Store
 Thumbs.db
