@@ -162,3 +162,48 @@ velvet-rain/
    * Check the **Actions** tab on GitHub: the automated workflow `.github/workflows/build-apk.yml` will compile and output `VelvetRain-Android-APK`.
 3. **Google Play Console:**
    * Follow the step-by-step checklist in `velvet-rain\PLAY_STORE_LAUNCH_GUIDE.md`.
+
+
+---
+
+## 8. Milestone Record: Google Play Submission (October 30, 2026)
+
+### A. Core Deployment & Identity Identifiers
+- **App Name:** `VelvetRain: Sleep & Focus`
+- **Package Name:** `com.velvetrain.app`
+- **Developer Name:** `Pegaxion`
+- **Developer Email:** `pegaxion@gmail.com`
+- **Developer Account ID:** `7984372693535028976`
+- **GitHub Repository:** `https://github.com/pegaxion/velvet-rain` (Branch: `main`)
+- **Privacy Policy URL:** `https://pegaxion.github.io/privacy.html`
+
+### B. Release Specifications
+- **Release Version:** `Version 3 (1.0.2)`
+- **Version Code:** `3`
+- **Minimum SDK:** `24` (Android 7.0+, required by Play automatic protection)
+- **Target SDK:** `36` (Android 16, latest Google Play compliance)
+- **Compile SDK:** `36`
+- **Download Size:** `3.27 MB` (Estimated download time: 1s)
+- **Signing Keystore:** `android/app/release.keystore` (Committed to repo, Alias: `velvetrain`, StorePass/KeyPass: `VelvetRain2026!`, Validity: 10,000 days)
+- **CI/CD Pipeline:** GitHub Actions workflow `.github/workflows/build-apk.yml` (Builds release `.aab` bundle and debug `.apk`)
+
+### C. Google Play Store Declarations Completed (15 Changes)
+1. **Store Listing:** Icon 512x512, Feature Graphic 1024x500, 4 Phone & Tablet Screenshots (1080x1920), Full & Short descriptions.
+2. **Category & Tags:** Health & Fitness, tags: `Meditation`, `Sleep`, `Sound effect`.
+3. **Content Rating:** Global Everyone / PEGI 3.
+4. **Target Audience:** 18+ (bypasses COPPA Families policies).
+5. **Data Safety:** Zero data collected, zero data shared.
+6. **Advertising ID:** Explicitly declared "No" (zero ads, zero tracking).
+7. **Health Declaration:** Non-medical, `Sleep management` and `Stress management, relaxation, mental acuity`.
+8. **App Access:** All functionality available without credentials/special access.
+9. **Financial & Government:** None declared.
+10. **Closed Testing Track (Alpha):** All 177 countries enabled, tester list `VelvetRain Early Testers` initialized with feedback channel `pegaxion@gmail.com`.
+
+### D. Current Live State & Next Operational Phase
+- **Status in Play Console:** `Changes in review`
+- **Expected Review Time:** 24–48 hours (automated notification sent to `pegaxion@gmail.com`).
+- **Post-Approval Action:**
+  1. Retrieve web and Play Store opt-in links from **Closed testing > Testers**.
+  2. Enlist 12–15 testers (personal network + `r/AndroidClosedTesting`).
+  3. Maintain continuous testing opt-in for 14 consecutive days.
+  4. Click **Apply for production** on Dashboard to launch publicly worldwide.
