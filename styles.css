@@ -576,23 +576,58 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
-  padding: 4px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  padding: 0;
   color: rgba(255, 255, 255, 0.25);
-  transition: transform var(--transition-fast), color var(--transition-fast);
+  transition: transform var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-fav-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .card-fav-btn:active {
-  transform: scale(0.82);
+  transform: scale(0.85);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .card-fav-btn.favorited {
   color: #EF4444;
-  text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+/* Empty Filter Notice */
+.empty-filter-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 36px 20px;
+  background: var(--bg-card);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  margin: 8px 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.empty-filter-state span {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.empty-filter-state p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
 }
 
 /* Tone Color Equalizer Row (Deep / Natural / Crisp) */

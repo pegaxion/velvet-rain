@@ -201,7 +201,7 @@ class VelvetAudioEngine {
       alpha: {
         id: 'alpha',
         name: 'Alpha Focus (10Hz)',
-        icon: '⚡',
+        icon: '🎯',
         desc: 'Binaural flow-state beat for ADHD & study',
         category: 'binaural',
         active: false,
@@ -575,6 +575,9 @@ class VelvetAudioEngine {
     if (sound.nodes.intervals) {
       sound.nodes.intervals.forEach(id => clearInterval(id));
     }
+    if (sound.nodes.timeouts) {
+      sound.nodes.timeouts.forEach(id => clearTimeout(id));
+    }
     if (sound.nodes.toneFilter) {
       try { sound.nodes.toneFilter.disconnect(); } catch (e) {}
     }
@@ -704,7 +707,7 @@ class VelvetAudioEngine {
     const dropletInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
       if (Math.random() > 0.4) {
-        this._playRaindrop(outputGain);
+        this._playRaindrop(sound, outputGain);
       }
     }, 450);
 
@@ -712,8 +715,8 @@ class VelvetAudioEngine {
     sound.nodes.intervals = [dropletInterval];
   }
 
-  _playRaindrop(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playRaindrop(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -740,19 +743,20 @@ class VelvetAudioEngine {
   _buildThunderGraph(sound, outputGain) {
     const thunderInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
-      this._triggerThunderStrike(outputGain);
+      this._triggerThunderStrike(sound, outputGain);
     }, 24000); // Trigger strike every 24-35s
 
     // Trigger initial gentle roll after 2 seconds
-    setTimeout(() => {
-      if (sound.active) this._triggerThunderStrike(outputGain);
+    const initialTimer = setTimeout(() => {
+      if (sound.active) this._triggerThunderStrike(sound, outputGain);
     }, 1800);
 
     sound.nodes.intervals = [thunderInterval];
+    sound.nodes.timeouts = [initialTimer];
   }
 
-  _triggerThunderStrike(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _triggerThunderStrike(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const duration = 6.0 + Math.random() * 3.5;
 
@@ -812,7 +816,7 @@ class VelvetAudioEngine {
       if (!sound.active || !this.ctx) return;
       const count = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < count; i++) {
-        setTimeout(() => this._playCampfirePop(outputGain), Math.random() * 250);
+        setTimeout(() => this._playCampfirePop(sound, outputGain), Math.random() * 250);
       }
     }, 280);
 
@@ -820,8 +824,8 @@ class VelvetAudioEngine {
     sound.nodes.intervals = [crackleInterval];
   }
 
-  _playCampfirePop(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playCampfirePop(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -870,15 +874,15 @@ class VelvetAudioEngine {
     const cricketInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
       if (Math.random() > 0.25) {
-        this._playCricketChirp(outputGain);
+        this._playCricketChirp(sound, outputGain);
       }
     }, 1400);
 
     sound.nodes.intervals = [cricketInterval];
   }
 
-  _playCricketChirp(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playCricketChirp(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
 
     // 3 rapid micro-chirps in sequence
@@ -1079,7 +1083,7 @@ class VelvetAudioEngine {
     const dripInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
       if (Math.random() > 0.35) {
-        this._playTentDroplet(outputGain);
+        this._playTentDroplet(sound, outputGain);
       }
     }, 380);
 
@@ -1087,8 +1091,8 @@ class VelvetAudioEngine {
     sound.nodes.intervals = [dripInterval];
   }
 
-  _playTentDroplet(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playTentDroplet(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -1138,7 +1142,7 @@ class VelvetAudioEngine {
       if (!sound.active || !this.ctx) return;
       const count = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < count; i++) {
-        setTimeout(() => this._playMetalPing(outputGain), Math.random() * 220);
+        setTimeout(() => this._playMetalPing(sound, outputGain), Math.random() * 220);
       }
     }, 240);
 
@@ -1146,8 +1150,8 @@ class VelvetAudioEngine {
     sound.nodes.intervals = [pingInterval];
   }
 
-  _playMetalPing(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playMetalPing(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -1221,7 +1225,7 @@ class VelvetAudioEngine {
     const bubbleInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
       if (Math.random() > 0.3) {
-        this._playWaterBubble(outputGain);
+        this._playWaterBubble(sound, outputGain);
       }
     }, 280);
 
@@ -1229,8 +1233,8 @@ class VelvetAudioEngine {
     sound.nodes.intervals = [bubbleInterval];
   }
 
-  _playWaterBubble(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playWaterBubble(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -1276,7 +1280,7 @@ class VelvetAudioEngine {
     const frogInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
       if (Math.random() > 0.3) {
-        this._playBullfrogCroak(outputGain);
+        this._playBullfrogCroak(sound, outputGain);
       }
     }, 3200);
 
@@ -1284,7 +1288,7 @@ class VelvetAudioEngine {
     const peeperInterval = setInterval(() => {
       if (!sound.active || !this.ctx) return;
       if (Math.random() > 0.4) {
-        this._playTreeFrogPeeper(outputGain);
+        this._playTreeFrogPeeper(sound, outputGain);
       }
     }, 1800);
 
@@ -1292,8 +1296,8 @@ class VelvetAudioEngine {
     sound.nodes.intervals = [frogInterval, peeperInterval];
   }
 
-  _playBullfrogCroak(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playBullfrogCroak(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const croakCount = Math.random() > 0.5 ? 2 : 1;
 
@@ -1325,8 +1329,8 @@ class VelvetAudioEngine {
     }
   }
 
-  _playTreeFrogPeeper(destGain) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+  _playTreeFrogPeeper(sound, destGain) {
+    if (!sound.active || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();

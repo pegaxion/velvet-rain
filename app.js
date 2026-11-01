@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       id: 'adhd',
       name: 'ADHD Flow State',
-      icon: '⚡',
+      icon: '🎯',
       mix: { alpha: 0.65, brown: 0.45, brook: 0.25 }
     },
     {
@@ -430,17 +430,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyFilterToCards() {
+    let visibleCount = 0;
     Object.keys(engine.sounds).forEach(id => {
       const card = document.getElementById(`card-${id}`);
       if (!card) return;
+      let show = true;
       if (currentFilter === 'active') {
-        card.style.display = engine.sounds[id].active ? 'flex' : 'none';
+        show = engine.sounds[id].active;
       } else if (currentFilter === 'favorites') {
-        card.style.display = isFavorite(id) ? 'flex' : 'none';
-      } else {
-        card.style.display = 'flex';
+        show = isFavorite(id);
       }
+      card.style.display = show ? 'flex' : 'none';
+      if (show) visibleCount++;
     });
+
+    let emptyNotice = document.getElementById('filter-empty-state');
+    if (visibleCount === 0) {
+      if (!emptyNotice) {
+        emptyNotice = document.createElement('div');
+        emptyNotice.id = 'filter-empty-state';
+        emptyNotice.className = 'empty-filter-state';
+        soundsGrid.appendChild(emptyNotice);
+      }
+      if (currentFilter === 'favorites') {
+        emptyNotice.innerHTML = `<span>❤️</span><p><strong>No favorite soundscapes yet</strong><br>Tap the ❤️ on any card to pin your favorite layers here.</p>`;
+      } else if (currentFilter === 'active') {
+        emptyNotice.innerHTML = `<span>🌧️</span><p><strong>No sounds currently playing</strong><br>Tap any soundscape or preset above to start listening.</p>`;
+      }
+      emptyNotice.style.display = 'block';
+    } else if (emptyNotice) {
+      emptyNotice.style.display = 'none';
+    }
   }
 
   function renderNowPlayingStrip() {
@@ -595,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
           () => {
             timerStatusLabel.textContent = 'Timer complete';
             updateAllCardUIs();
-            updateMasterBar();
+            syncAllUI();
           }
         );
       }
