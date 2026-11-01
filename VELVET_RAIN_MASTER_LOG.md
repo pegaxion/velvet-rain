@@ -285,3 +285,7 @@ Benchmarked against *White Noise Lite (TMSOFT)*, *Sleepa*, *Pzizz*, *Ambience*, 
 - **Version:** `1.1.0` (versionCode: `5`)
 - **Package ID:** `com.velvetrain.app`
 - **Signing:** Release Keystore (`release.keystore`, alias `velvetrain`)
+- **Google Play Status:** 🟢 **Approved & Live to Testers** (November 1, 2026, 3:57 PM)
+- **Active Regions:** 178 countries / regions (Phones, Tablets, Desktop, Android XR)
+- **Testers Group:** `velvetrain-testers@googlegroups.com`
+- **Play Store Web Join:** `https://play.google.com/apps/testing/com.velvetrain.app`
