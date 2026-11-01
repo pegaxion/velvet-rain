@@ -15,6 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeCountLabel = document.getElementById('active-count');
   const timerStatusLabel = document.getElementById('timer-status');
 
+  // Now Playing & Filter Elements
+  const nowPlayingSection = document.getElementById('now-playing-section');
+  const nowPlayingCount = document.getElementById('now-playing-count');
+  const activeChipsContainer = document.getElementById('active-chips-container');
+  const stopAllActiveBtn = document.getElementById('stop-all-active-btn');
+  const filterAllBtn = document.getElementById('filter-all-btn');
+  const filterActiveBtn = document.getElementById('filter-active-btn');
+  const filterActiveCount = document.getElementById('filter-active-count');
+  const masterStopBtn = document.getElementById('stop-master-btn');
+
+  let currentFilter = 'all'; // 'all' or 'active'
+
   // Subtle Haptic Feedback for tactile mobile feel
   function triggerHaptic(type = 'light') {
     if ('vibrate' in navigator) {
@@ -27,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Sync Lock-Screen MediaSession play/pause with Master Bar UI
   window.onVelvetEnginePlayStateChange = () => {
-    updateMasterBar();
+    syncAllUI();
   };
 
   // Modals
@@ -144,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       updateAllCardUIs();
-      updateMasterBar();
+      syncAllUI();
     }, 250);
   }
 
@@ -167,11 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <p>${sound.desc}</p>
             </div>
           </div>
-          <div class="eq-bars">
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-            <div class="eq-bar"></div>
-          </div>
+          <button class="card-toggle-btn ${sound.active ? 'active' : ''}" data-id="${sound.id}" title="${sound.active ? 'Turn off ' + sound.name : 'Turn on ' + sound.name}">
+            <span class="toggle-icon">⏻</span>
+            <span class="toggle-status">${sound.active ? 'PLAYING' : 'OFF'}</span>
+          </button>
         </div>
         <div class="slider-container">
           <input type="range" class="volume-slider" min="0" max="100" value="${Math.round(sound.volume * 100)}" data-id="${sound.id}">
@@ -179,12 +190,23 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // Tap card top to toggle on/off
+      // Tap card top or toggle button to turn on/off
       card.querySelector('.card-top').addEventListener('click', () => {
         triggerHaptic('light');
-        engine.toggleSound(sound.id);
+        if (sound.active) {
+          engine.stopSound(sound.id);
+        } else {
+          if (sound.volume === 0) {
+            sound.volume = 0.65;
+            const s = card.querySelector('.volume-slider');
+            if (s) s.value = 65;
+            document.getElementById(`pct-${sound.id}`).textContent = '65%';
+            engine.setSoundVolume(sound.id, 0.65);
+          }
+          engine.startSound(sound.id);
+        }
         updateCardUI(sound.id);
-        updateMasterBar();
+        syncAllUI();
       });
 
       // Volume slider change
@@ -193,10 +215,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const val = parseInt(e.target.value, 10) / 100;
         engine.setSoundVolume(sound.id, val);
         document.getElementById(`pct-${sound.id}`).textContent = `${Math.round(val * 100)}%`;
-        if (!sound.active && val > 0) {
+        if (val === 0 && sound.active) {
+          engine.stopSound(sound.id);
+          updateCardUI(sound.id);
+          syncAllUI();
+        } else if (val > 0 && !sound.active) {
           engine.startSound(sound.id);
           updateCardUI(sound.id);
-          updateMasterBar();
+          syncAllUI();
+        } else {
+          renderNowPlayingStrip();
         }
       });
 
@@ -209,10 +237,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = document.getElementById(`card-${id}`);
     if (!card) return;
 
+    const toggleBtn = card.querySelector('.card-toggle-btn');
+    const toggleStatus = card.querySelector('.toggle-status');
+
     if (sound.active) {
       card.classList.add('active');
+      if (toggleBtn) toggleBtn.classList.add('active');
+      if (toggleStatus) toggleStatus.textContent = 'PLAYING';
     } else {
       card.classList.remove('active');
+      if (toggleBtn) toggleBtn.classList.remove('active');
+      if (toggleStatus) toggleStatus.textContent = 'OFF';
+    }
+
+    if (currentFilter === 'active') {
+      card.style.display = sound.active ? 'flex' : 'none';
+    } else {
+      card.style.display = 'flex';
     }
   }
 
@@ -227,17 +268,113 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function updateMasterBar() {
-    const activeCount = engine.getActiveCount();
-    activeCountLabel.textContent = activeCount === 0 
-      ? 'Tap any sound to start' 
-      : `${activeCount} sound${activeCount > 1 ? 's' : ''} playing`;
+  function applyFilterToCards() {
+    Object.keys(engine.sounds).forEach(id => {
+      const card = document.getElementById(`card-${id}`);
+      if (!card) return;
+      if (currentFilter === 'active') {
+        card.style.display = engine.sounds[id].active ? 'flex' : 'none';
+      } else {
+        card.style.display = 'flex';
+      }
+    });
+  }
 
-    if (engine.isPlaying && activeCount > 0) {
-      playAllIcon.textContent = '⏸️';
-    } else {
-      playAllIcon.textContent = '▶️';
+  function renderNowPlayingStrip() {
+    const activeSounds = Object.values(engine.sounds).filter(s => s.active);
+    const count = activeSounds.length;
+
+    if (nowPlayingCount) nowPlayingCount.textContent = count;
+    if (filterActiveCount) filterActiveCount.textContent = count;
+
+    if (count > 0 && nowPlayingSection) {
+      nowPlayingSection.style.display = 'block';
+      if (activeChipsContainer) {
+        activeChipsContainer.innerHTML = activeSounds.map(s => `
+          <div class="active-sound-chip" data-id="${s.id}">
+            <span>${s.icon} ${s.name} <strong class="chip-vol">${Math.round(s.volume * 100)}%</strong></span>
+            <button class="chip-remove-btn" data-id="${s.id}" title="Turn off ${s.name}">✕</button>
+          </div>
+        `).join('');
+
+        activeChipsContainer.querySelectorAll('.chip-remove-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            triggerHaptic('light');
+            const sid = btn.dataset.id;
+            engine.stopSound(sid);
+            updateCardUI(sid);
+            syncAllUI();
+          });
+        });
+      }
+    } else if (nowPlayingSection) {
+      nowPlayingSection.style.display = 'none';
+      if (currentFilter === 'active') {
+        currentFilter = 'all';
+        if (filterAllBtn) filterAllBtn.classList.add('active');
+        if (filterActiveBtn) filterActiveBtn.classList.remove('active');
+        applyFilterToCards();
+      }
     }
+  }
+
+  function updateMasterBar() {
+    const activeSounds = Object.values(engine.sounds).filter(s => s.active);
+    const count = activeSounds.length;
+
+    if (count === 0) {
+      activeCountLabel.textContent = 'Tap any sound to start';
+      if (masterStopBtn) masterStopBtn.style.display = 'none';
+      playAllIcon.textContent = '▶️';
+    } else {
+      const names = activeSounds.map(s => s.name).join(', ');
+      activeCountLabel.textContent = `${count} Active: ${names}`;
+      if (masterStopBtn) masterStopBtn.style.display = 'flex';
+      playAllIcon.textContent = engine.isPlaying ? '⏸️' : '▶️';
+    }
+  }
+
+  function syncAllUI() {
+    renderNowPlayingStrip();
+    updateMasterBar();
+    applyFilterToCards();
+  }
+
+  function stopEverything() {
+    triggerHaptic('medium');
+    engine.stopAll();
+    updateAllCardUIs();
+    syncAllUI();
+  }
+
+  // Filter tab events
+  if (filterAllBtn) {
+    filterAllBtn.addEventListener('click', () => {
+      triggerHaptic('light');
+      currentFilter = 'all';
+      filterAllBtn.classList.add('active');
+      if (filterActiveBtn) filterActiveBtn.classList.remove('active');
+      applyFilterToCards();
+    });
+  }
+
+  if (filterActiveBtn) {
+    filterActiveBtn.addEventListener('click', () => {
+      triggerHaptic('light');
+      currentFilter = 'active';
+      filterActiveBtn.classList.add('active');
+      if (filterAllBtn) filterAllBtn.classList.remove('active');
+      applyFilterToCards();
+    });
+  }
+
+  // Stop All Buttons
+  if (stopAllActiveBtn) {
+    stopAllActiveBtn.addEventListener('click', stopEverything);
+  }
+  if (masterStopBtn) {
+    masterStopBtn.addEventListener('click', stopEverything);
   }
 
   // Play/Pause Master
@@ -249,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     engine.togglePlayAll();
-    updateMasterBar();
+    syncAllUI();
   });
 
   // Master Volume
@@ -499,5 +636,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize UI
   renderPresets();
   renderSoundboard();
-  updateMasterBar();
+  syncAllUI();
 });

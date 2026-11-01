@@ -50,11 +50,32 @@
       </div>
     </section>
 
+    <!-- Now Playing Live Strip (Active Soundscape Tracker) -->
+    <section class="now-playing-section" id="now-playing-section" style="display:none;">
+      <div class="now-playing-header">
+        <div class="now-playing-title">
+          <span class="live-dot"></span>
+          <span>Now Playing (<span id="now-playing-count">0</span>)</span>
+        </div>
+        <button class="turn-off-all-btn" id="stop-all-active-btn" title="Turn off all active sounds">
+          <span>Turn off all</span>
+        </button>
+      </div>
+      <div class="active-chips-scroll" id="active-chips-container">
+        <!-- Injected via app.js: e.g. [🌧️ Heavy Rain 80% ✕] -->
+      </div>
+    </section>
+
     <!-- Soundboard Grid -->
     <main>
-      <div class="section-title" style="margin-top:14px;">
-        <span>Soundscape Layers</span>
-        <span style="font-size:11px;color:var(--text-muted);">Adjust individual volume</span>
+      <div class="layers-header">
+        <div class="section-title" style="margin:0;">
+          <span>Soundscape Layers</span>
+        </div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" id="filter-all-btn">All (9)</button>
+          <button class="filter-tab" id="filter-active-btn">Active (<span id="filter-active-count">0</span>)</button>
+        </div>
       </div>
       <div class="sounds-grid" id="sounds-grid">
         <!-- Sound cards dynamically injected via app.js -->
@@ -68,6 +89,9 @@
       <div class="master-info">
         <button class="play-all-btn" id="play-all-btn" title="Play or Pause All">
           <span id="play-all-icon">▶️</span>
+        </button>
+        <button class="stop-master-btn" id="stop-master-btn" title="Stop All Sounds" style="display:none;">
+          <span>⏹</span>
         </button>
         <div class="active-summary">
           <h4 id="active-count">Tap any sound to start</h4>

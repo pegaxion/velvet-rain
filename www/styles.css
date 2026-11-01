@@ -222,6 +222,162 @@ body {
   }
 }
 
+/* ==========================================================================
+   NOW PLAYING LIVE STRIP (ACTIVE SOUNDS TRACKER)
+   ========================================================================== */
+.now-playing-section {
+  margin-top: 14px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 69, 0.8) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 15px rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.now-playing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.now-playing-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--accent-cyan);
+  animation: live-pulse 1.4s infinite ease-in-out;
+}
+
+@keyframes live-pulse {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.turn-off-all-btn {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #F87171;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.turn-off-all-btn:active {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(0.95);
+}
+
+.active-chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.active-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.active-sound-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.active-sound-chip .chip-vol {
+  color: var(--accent-cyan);
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.active-sound-chip .chip-remove-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-left: 2px;
+}
+
+.active-sound-chip .chip-remove-btn:active {
+  background: #EF4444;
+  transform: scale(1.15);
+}
+
+/* ==========================================================================
+   LAYERS HEADER & FILTER TABS
+   ========================================================================== */
+.layers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-tab.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+/* ==========================================================================
+   SOUNDBOARD CARDS (HIGH-CONTRAST ACTIVE STATES)
+   ========================================================================== */
 .sound-card {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -234,6 +390,7 @@ body {
   backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
+  opacity: 0.72;
 }
 
 .sound-card::before {
@@ -242,15 +399,17 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   background: transparent;
   transition: background var(--transition-normal);
 }
 
 .sound-card.active {
-  background: var(--bg-card-active);
-  border-color: var(--border-active);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px var(--accent-glow);
+  opacity: 1;
+  background: linear-gradient(145deg, rgba(20, 36, 65, 0.95) 0%, rgba(10, 16, 30, 0.98) 100%);
+  border: 1.5px solid var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.28), 0 8px 30px rgba(0, 0, 0, 0.6);
+  transform: translateY(-2px);
 }
 
 .sound-card.active::before {
@@ -262,12 +421,15 @@ body {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+  user-select: none;
 }
 
 .card-info {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .card-icon {
@@ -279,52 +441,76 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .sound-card.active .card-icon {
   transform: scale(1.08);
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(56, 189, 248, 0.18);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+}
+
+.card-text {
+  min-width: 0;
 }
 
 .card-text h3 {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-text p {
   font-size: 11px;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Mini Audio Equalizer Visualizer Bars */
-.eq-bars {
+/* Dedicated Power / Toggle Pill Button */
+.card-toggle-btn {
+  border: none;
+  outline: none;
+  padding: 6px 11px;
+  border-radius: var(--radius-full);
   display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 18px;
-  opacity: 0;
-  transition: opacity var(--transition-normal);
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
 }
 
-.sound-card.active .eq-bars {
-  opacity: 1;
+.card-toggle-btn:active {
+  transform: scale(0.92);
 }
 
-.eq-bar {
-  width: 3px;
-  height: 100%;
-  background: var(--accent-cyan);
-  border-radius: 2px;
-  animation: eq-pulse 0.8s ease-in-out infinite alternate;
+.card-toggle-btn .toggle-icon {
+  font-size: 12px;
+  line-height: 1;
 }
-.eq-bar:nth-child(2) { animation-delay: 0.2s; height: 75%; background: var(--accent-primary); }
-.eq-bar:nth-child(3) { animation-delay: 0.4s; height: 50%; background: var(--accent-purple); }
 
-@keyframes eq-pulse {
-  0% { transform: scaleY(0.2); }
-  100% { transform: scaleY(1); }
+.sound-card.active .card-toggle-btn {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--accent-cyan);
+  color: #38BDF8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.sound-card.active .card-toggle-btn .toggle-icon {
+  color: #38BDF8;
+  animation: live-pulse 1.2s infinite ease-in-out;
 }
 
 /* Volume Slider in Card */
@@ -424,16 +610,48 @@ body {
   cursor: pointer;
   box-shadow: 0 4px 18px var(--accent-glow);
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .play-all-btn:active {
   transform: scale(0.9);
 }
 
+.stop-master-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #F87171;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.2);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.stop-master-btn:active {
+  transform: scale(0.9);
+  background: rgba(239, 68, 68, 0.35);
+}
+
+.active-summary {
+  min-width: 0;
+  flex: 1;
+}
+
 .active-summary h4 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .active-summary p {
@@ -442,6 +660,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .master-controls {
