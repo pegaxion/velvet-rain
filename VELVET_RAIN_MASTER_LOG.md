@@ -207,3 +207,44 @@ velvet-rain/
   2. Enlist 12–15 testers (personal network + `r/AndroidClosedTesting`).
   3. Maintain continuous testing opt-in for 14 consecutive days.
   4. Click **Apply for production** on Dashboard to launch publicly worldwide.
+
+
+---
+
+## 9. Milestone Record: UX Polish — "Now Playing" Visual Control Center (November 1, 2026)
+
+### A. Problem Identified in Real Device Testing
+When multiple sound layers were playing simultaneously (e.g., Heavy Rain + Thunder + Campfire), user feedback highlighted:
+1. Difficulty identifying exactly which soundscapes were active across the 9-card grid.
+2. Inability to easily silence 1 or 2 specific sounds without scrolling and guessing.
+3. Insufficient visual contrast between active and inactive sound cards on OLED mobile screens.
+4. Dragging volume to 0% did not auto-stop the sound node.
+
+### B. Solutions Implemented in v1.0.3 (versionCode: 4)
+1. **Live "Now Playing" Active Strip:**
+   - Automatically appears above the soundboard when 1 or more sounds are active.
+   - Shows active sound chips with exact volume (e.g. `[🌧️ Heavy Rain 80% ✕] [⚡ Thunder 45% ✕]`).
+   - Tapping the `✕` on any chip immediately silences that specific sound with tactile haptic feedback.
+   - Includes a global **"Turn off all"** button.
+2. **High-Contrast Active Card States:**
+   - Active cards illuminate with a vibrant neon cyan border (`#38BDF8`), glowing background gradient, and illuminated icon badge.
+   - Inactive cards stay softly dimmed (`opacity: 0.72`), creating night-and-day visual contrast.
+3. **Dedicated Power / Toggle Pill Button on Every Card:**
+   - Displays `🟢 PLAYING` with an active pulsing indicator when on.
+   - Displays `○ OFF` when idle.
+   - Tapping the button or card header toggles on/off instantly.
+4. **Active Sound Filter Tabs:**
+   - Added `[All (9)]` and `[Active (X)]` filter tabs above the soundboard.
+   - Tapping `Active` isolates only currently playing cards so users don't have to scroll past inactive layers.
+5. **Master Bar Live Summary & Stop Button:**
+   - Shows real-time names of active layers (e.g. `3 Active: Heavy Rain, Distant Thunder, Cozy Campfire`).
+   - Added a 1-tap `⏹ Stop All` button in the floating bottom player bar.
+6. **Volume Slider Logic:**
+   - Dragging volume to `0%` now cleanly stops the sound and removes it from the Now Playing strip.
+   - Dragging from `0%` to `>0%` starts the sound automatically.
+
+### C. Build & Deployment Artifacts
+- **Version:** `1.0.3` (versionCode: `4`)
+- **Git Commit:** `b38cd51` (Pushed to `pegaxion/velvet-rain` main branch)
+- **Local APK:** `C:\Users\ankuj\Downloads\VelvetRain-debug.apk` (and `velvet-rain\app-debug.apk`)
+- **Release AAB:** `C:\Users\ankuj\Downloads\app-release.aab` (and `velvet-rain\app-release.aab`)
