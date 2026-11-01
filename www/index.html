@@ -73,7 +73,8 @@
           <span>Soundscape Layers</span>
         </div>
         <div class="filter-tabs">
-          <button class="filter-tab active" id="filter-all-btn">All (9)</button>
+          <button class="filter-tab active" id="filter-all-btn">All (16)</button>
+          <button class="filter-tab" id="filter-favorites-btn">❤️ Fav (<span id="filter-favorites-count">0</span>)</button>
           <button class="filter-tab" id="filter-active-btn">Active (<span id="filter-active-count">0</span>)</button>
         </div>
       </div>
@@ -176,13 +177,25 @@
         <button class="close-btn close-modal-btn">✕</button>
       </div>
       
+      <!-- Headphone Disconnect Protection Toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-subtle);">
+        <div style="padding-right:12px;">
+          <h4 style="font-size:15px;font-weight:600;">🎧 Pause on Headphone Disconnect</h4>
+          <p style="font-size:12px;color:var(--text-muted);">Auto-pauses sound if Bluetooth dies or disconnects so speakers don't wake the bedroom</p>
+        </div>
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+          <input type="checkbox" id="disconnect-toggle" checked style="opacity:0;width:0;height:0;">
+          <span style="position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,0.15);border-radius:34px;transition:.3s;" id="disconnect-slider"></span>
+        </label>
+      </div>
+
       <!-- OLED Toggle -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-subtle);">
         <div>
           <h4 style="font-size:15px;font-weight:600;">OLED True Black Mode</h4>
           <p style="font-size:12px;color:var(--text-muted);">Pitch-black background for dark bedrooms & battery saving</p>
         </div>
-        <label style="position:relative;display:inline-block;width:44px;height:24px;">
+        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
           <input type="checkbox" id="oled-toggle" style="opacity:0;width:0;height:0;">
           <span style="position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,0.15);border-radius:34px;transition:.3s;" id="oled-slider"></span>
         </label>
@@ -206,7 +219,7 @@
 
       <!-- Version & Privacy -->
       <div style="margin-top:20px;text-align:center;">
-        <p style="font-size:13px;font-weight:600;color:var(--text-primary);">VelvetRain v1.0.0</p>
+        <p style="font-size:13px;font-weight:600;color:var(--text-primary);">VelvetRain v1.1.0</p>
         <p style="font-size:12px;color:var(--text-muted);margin:4px 0 14px;">Crafted by <a href="https://pegaxion.github.io/" target="_blank" style="color:var(--accent-primary);text-decoration:none;font-weight:600;">Pegaxion</a></p>
         <div style="display:flex;justify-content:center;gap:14px;font-size:12px;">
           <a href="privacy-policy.html" target="_blank" style="color:var(--accent-cyan);text-decoration:none;">Privacy Policy</a>

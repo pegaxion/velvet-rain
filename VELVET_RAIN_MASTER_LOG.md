@@ -248,3 +248,40 @@ When multiple sound layers were playing simultaneously (e.g., Heavy Rain + Thund
 - **Git Commit:** `b38cd51` (Pushed to `pegaxion/velvet-rain` main branch)
 - **Local APK:** `C:\Users\ankuj\Downloads\VelvetRain-debug.apk` (and `velvet-rain\app-debug.apk`)
 - **Release AAB:** `C:\Users\ankuj\Downloads\app-release.aab` (and `velvet-rain\app-release.aab`)
+
+---
+
+## 10. Milestone Record: Competitive Leap Upgrade (v1.1.0 / versionCode: 5) (November 1, 2026)
+
+### A. Competitive Deep Audit vs Leading Ambient & Sleep Apps
+Benchmarked against *White Noise Lite (TMSOFT)*, *Sleepa*, *Pzizz*, *Ambience*, *Atmosphere*, and *Sleep Sounds*:
+1. **Flaws Exploited in Competitor Apps:**
+   - Obtrusive bottom banner ads & popups (Blinkit, CoinDCX, Adobe) waking users at night.
+   - Heavy download sizes (50MB–200MB) due to static MP3 audio loops that cause noticeable clicking seams.
+   - Sudden middle-of-the-night speaker blasts when Bluetooth earbuds disconnect.
+2. **Key Capabilities Implemented in VelvetRain v1.1.0:**
+   - **Expanded Sound Catalog (9 ➔ 16 Procedural Synthesizers):**
+     1. `Rain on Canvas Tent` (muffled resonant patter)
+     2. `Rain on Metal Roof` (crisp metallic pinging)
+     3. `Babbling Brook` (liquid stream tumbling over pebbles)
+     4. `Twilight Frogs & Pond` (rhythmic marsh bullfrogs & night peepers)
+     5. `Soothing Pink Noise` (clinical 1/f spectrum for tinnitus & deep sleep)
+     6. `Airplane Cabin Hum` (fuselage drone & ventilation hiss)
+     7. `Alpha Focus Waves (10Hz)` (binaural flow state for ADHD & deep study)
+   - **Headphone Disconnect Auto-Pause Protection:**
+     - Listens to device changes and immediately halts audio if Bluetooth dies or disconnects, protecting bedroom silence.
+     - Toggle in Settings modal with persistent preference storage.
+   - **Favorites (❤️) Pinning & Filter Tab:**
+     - 1-tap heart button on every sound card.
+     - Persistent in `localStorage` (`velvet_favorites`).
+     - Soundboard filter tabs: `[All (16)]` `[❤️ Fav (X)]` `[Active (X)]`.
+   - **Real-Time Pitch & Tone Color Equalizer (Deep / Natural / Crisp):**
+     - Three-way hardware biquad filter selector on each card to shape timbre.
+   - **8 Curated Atmospheres:**
+     - `Midnight Storm`, `Canvas Tent`, `Tin Roof Slumber`, `Alpine Stream`, `ADHD Flow State`, `Night Flight`, `Deep Delta Sleep`, `Tinnitus Relief`.
+   - **Zero Audio Bloat:** 100% mathematical Web Audio API synthesis (<3.5 MB total app size, 0 bytes external audio files).
+
+### B. Version Metadata
+- **Version:** `1.1.0` (versionCode: `5`)
+- **Package ID:** `com.velvetrain.app`
+- **Signing:** Release Keystore (`release.keystore`, alias `velvetrain`)

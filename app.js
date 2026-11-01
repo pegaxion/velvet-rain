@@ -21,11 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeChipsContainer = document.getElementById('active-chips-container');
   const stopAllActiveBtn = document.getElementById('stop-all-active-btn');
   const filterAllBtn = document.getElementById('filter-all-btn');
+  const filterFavoritesBtn = document.getElementById('filter-favorites-btn');
+  const filterFavoritesCount = document.getElementById('filter-favorites-count');
   const filterActiveBtn = document.getElementById('filter-active-btn');
   const filterActiveCount = document.getElementById('filter-active-count');
   const masterStopBtn = document.getElementById('stop-master-btn');
 
-  let currentFilter = 'all'; // 'all' or 'active'
+  let currentFilter = 'all'; // 'all', 'favorites', or 'active'
 
   // Subtle Haptic Feedback for tactile mobile feel
   function triggerHaptic(type = 'light') {
@@ -37,10 +39,104 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Floating Toast Alert
+  let toastTimeout = null;
+  function showToast(message, duration = 3500) {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'app-toast';
+      toast.className = 'app-toast';
+      document.body.appendChild(toast);
+    }
+    toast.innerHTML = message;
+    toast.classList.add('visible');
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      toast.classList.remove('visible');
+    }, duration);
+  }
+
   // Sync Lock-Screen MediaSession play/pause with Master Bar UI
-  window.onVelvetEnginePlayStateChange = () => {
+  window.onVelvetEnginePlayStateChange = (isPlaying, reason) => {
     syncAllUI();
+    if (reason === 'headphone_disconnected') {
+      showToast('🎧 Headphone disconnected — audio paused to protect your bedroom', 4500);
+      triggerHaptic('medium');
+    }
   };
+
+  // Favorites (❤️) Management backed by localStorage
+  function getFavorites() {
+    try {
+      return JSON.parse(localStorage.getItem('velvet_favorites') || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveFavorites(favs) {
+    localStorage.setItem('velvet_favorites', JSON.stringify(favs));
+  }
+
+  function isFavorite(id) {
+    return getFavorites().includes(id);
+  }
+
+  function toggleFavorite(id) {
+    let favs = getFavorites();
+    if (favs.includes(id)) {
+      favs = favs.filter(item => item !== id);
+    } else {
+      favs.push(id);
+    }
+    saveFavorites(favs);
+    updateFavoritesCount();
+    updateCardFavUI(id);
+    if (currentFilter === 'favorites') {
+      applyFilterToCards();
+    }
+  }
+
+  function updateFavoritesCount() {
+    const count = getFavorites().length;
+    if (filterFavoritesCount) filterFavoritesCount.textContent = count;
+  }
+
+  function updateCardFavUI(id) {
+    const card = document.getElementById(`card-${id}`);
+    if (!card) return;
+    const favBtn = card.querySelector('.card-fav-btn');
+    if (favBtn) {
+      const faved = isFavorite(id);
+      favBtn.classList.toggle('favorited', faved);
+      favBtn.innerHTML = faved ? '❤️' : '🤍';
+      favBtn.title = faved ? 'Remove favorite' : 'Add favorite';
+    }
+  }
+
+  // Tone Color Presets Persistence
+  function getSavedTones() {
+    try {
+      return JSON.parse(localStorage.getItem('velvet_tones') || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveTonePref(id, tone) {
+    const tones = getSavedTones();
+    tones[id] = tone;
+    localStorage.setItem('velvet_tones', JSON.stringify(tones));
+  }
+
+  // Restore saved tones into engine
+  const initialTones = getSavedTones();
+  Object.keys(engine.sounds).forEach(id => {
+    if (initialTones[id]) {
+      engine.sounds[id].tone = initialTones[id];
+    }
+  });
 
   // Modals
   const timerModal = document.getElementById('timer-modal');
@@ -88,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // PRESET SOUNDSCAPES
+  // PRESET SOUNDSCAPES (EXPANDED TO 8 ATMOSPHERES)
   // ==========================================
   const builtInPresets = [
     {
@@ -98,34 +194,46 @@ document.addEventListener('DOMContentLoaded', () => {
       mix: { rain: 0.80, thunder: 0.45, wind: 0.25 }
     },
     {
-      id: 'cabin',
-      name: 'Cozy Hearth',
-      icon: '🔥',
-      mix: { campfire: 0.75, rain: 0.35, crickets: 0.20 }
+      id: 'tent',
+      name: 'Canvas Tent',
+      icon: '⛺',
+      mix: { raintent: 0.75, campfire: 0.35, crickets: 0.20 }
     },
     {
-      id: 'shore',
-      name: 'Moonlit Shore',
-      icon: '🌊',
-      mix: { ocean: 0.70, wind: 0.30, brown: 0.20 }
+      id: 'tinroof',
+      name: 'Tin Roof Slumber',
+      icon: '🏠',
+      mix: { rainroof: 0.70, brown: 0.35 }
+    },
+    {
+      id: 'stream',
+      name: 'Alpine Stream',
+      icon: '🏞️',
+      mix: { brook: 0.70, frogs: 0.30, wind: 0.25 }
     },
     {
       id: 'adhd',
-      name: 'ADHD Deep Focus',
-      icon: '🧠',
-      mix: { brown: 0.65, binaural: 0.40, rain: 0.25 }
+      name: 'ADHD Flow State',
+      icon: '⚡',
+      mix: { alpha: 0.65, brown: 0.45, brook: 0.25 }
+    },
+    {
+      id: 'flight',
+      name: 'Night Flight',
+      icon: '✈️',
+      mix: { airplane: 0.70, pink: 0.40 }
     },
     {
       id: 'delta',
       name: 'Deep Delta Sleep',
       icon: '💤',
-      mix: { binaural: 0.70, crickets: 0.25, ocean: 0.30 }
+      mix: { binaural: 0.70, ocean: 0.35, fan: 0.30 }
     },
     {
-      id: 'fan',
-      name: 'Cool Breeze',
-      icon: '💨',
-      mix: { fan: 0.60, brown: 0.35, rain: 0.20 }
+      id: 'tinnitus',
+      name: 'Tinnitus Relief',
+      icon: '🌸',
+      mix: { pink: 0.75, raintent: 0.30 }
     }
   ];
 
@@ -169,44 +277,73 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = `sound-card ${sound.active ? 'active' : ''}`;
       card.id = `card-${sound.id}`;
+      const isFav = isFavorite(sound.id);
+      const currentTone = sound.tone || 'natural';
 
       card.innerHTML = `
-        <div class="card-top" data-id="${sound.id}">
-          <div class="card-info">
+        <div class="card-top">
+          <div class="card-info" data-id="${sound.id}">
             <div class="card-icon">${sound.icon}</div>
             <div class="card-text">
               <h3>${sound.name}</h3>
               <p>${sound.desc}</p>
             </div>
           </div>
-          <button class="card-toggle-btn ${sound.active ? 'active' : ''}" data-id="${sound.id}" title="${sound.active ? 'Turn off ' + sound.name : 'Turn on ' + sound.name}">
-            <span class="toggle-icon">⏻</span>
-            <span class="toggle-status">${sound.active ? 'PLAYING' : 'OFF'}</span>
-          </button>
+          <div class="card-actions">
+            <button class="card-fav-btn ${isFav ? 'favorited' : ''}" data-id="${sound.id}" title="${isFav ? 'Remove favorite' : 'Add favorite'}">
+              ${isFav ? '❤️' : '🤍'}
+            </button>
+            <button class="card-toggle-btn ${sound.active ? 'active' : ''}" data-id="${sound.id}" title="${sound.active ? 'Turn off ' + sound.name : 'Turn on ' + sound.name}">
+              <span class="toggle-icon">⏻</span>
+              <span class="toggle-status">${sound.active ? 'PLAYING' : 'OFF'}</span>
+            </button>
+          </div>
         </div>
         <div class="slider-container">
           <input type="range" class="volume-slider" min="0" max="100" value="${Math.round(sound.volume * 100)}" data-id="${sound.id}">
           <span class="volume-percent" id="pct-${sound.id}">${Math.round(sound.volume * 100)}%</span>
         </div>
+        <div class="tone-container">
+          <span class="tone-label">Tone Color</span>
+          <div class="tone-selector" data-id="${sound.id}">
+            <button class="tone-btn ${currentTone === 'deep' ? 'active' : ''}" data-tone="deep">Deep</button>
+            <button class="tone-btn ${currentTone === 'natural' ? 'active' : ''}" data-tone="natural">Natural</button>
+            <button class="tone-btn ${currentTone === 'crisp' ? 'active' : ''}" data-tone="crisp">Crisp</button>
+          </div>
+        </div>
       `;
 
-      // Tap card top or toggle button to turn on/off
-      card.querySelector('.card-top').addEventListener('click', () => {
+      // Tap card info to toggle on/off
+      card.querySelector('.card-info').addEventListener('click', () => {
+        triggerSoundToggle(sound.id, card);
+      });
+
+      // Toggle button click
+      card.querySelector('.card-toggle-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        triggerSoundToggle(sound.id, card);
+      });
+
+      // Favorite button click
+      card.querySelector('.card-fav-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
         triggerHaptic('light');
-        if (sound.active) {
-          engine.stopSound(sound.id);
-        } else {
-          if (sound.volume === 0) {
-            sound.volume = 0.65;
-            const s = card.querySelector('.volume-slider');
-            if (s) s.value = 65;
-            document.getElementById(`pct-${sound.id}`).textContent = '65%';
-            engine.setSoundVolume(sound.id, 0.65);
-          }
-          engine.startSound(sound.id);
-        }
-        updateCardUI(sound.id);
-        syncAllUI();
+        toggleFavorite(sound.id);
+      });
+
+      // Tone selection buttons
+      card.querySelectorAll('.tone-btn').forEach(toneBtn => {
+        toneBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          triggerHaptic('light');
+          const chosenTone = toneBtn.dataset.tone;
+          engine.setSoundTone(sound.id, chosenTone);
+          saveTonePref(sound.id, chosenTone);
+
+          // Update active style on tone buttons
+          card.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+          toneBtn.classList.add('active');
+        });
       });
 
       // Volume slider change
@@ -230,6 +367,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       soundsGrid.appendChild(card);
     });
+
+    updateFavoritesCount();
+  }
+
+  function triggerSoundToggle(soundId, card) {
+    triggerHaptic('light');
+    const sound = engine.sounds[soundId];
+    if (sound.active) {
+      engine.stopSound(sound.id);
+    } else {
+      if (sound.volume === 0) {
+        sound.volume = 0.65;
+        const s = card ? card.querySelector('.volume-slider') : document.querySelector(`.volume-slider[data-id="${soundId}"]`);
+        if (s) s.value = 65;
+        const p = document.getElementById(`pct-${sound.id}`);
+        if (p) p.textContent = '65%';
+        engine.setSoundVolume(sound.id, 0.65);
+      }
+      engine.startSound(sound.id);
+    }
+    updateCardUI(sound.id);
+    syncAllUI();
   }
 
   function updateCardUI(id) {
@@ -252,6 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentFilter === 'active') {
       card.style.display = sound.active ? 'flex' : 'none';
+    } else if (currentFilter === 'favorites') {
+      card.style.display = isFavorite(sound.id) ? 'flex' : 'none';
     } else {
       card.style.display = 'flex';
     }
@@ -274,6 +435,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!card) return;
       if (currentFilter === 'active') {
         card.style.display = engine.sounds[id].active ? 'flex' : 'none';
+      } else if (currentFilter === 'favorites') {
+        card.style.display = isFavorite(id) ? 'flex' : 'none';
       } else {
         card.style.display = 'flex';
       }
@@ -354,6 +517,18 @@ document.addEventListener('DOMContentLoaded', () => {
       triggerHaptic('light');
       currentFilter = 'all';
       filterAllBtn.classList.add('active');
+      if (filterFavoritesBtn) filterFavoritesBtn.classList.remove('active');
+      if (filterActiveBtn) filterActiveBtn.classList.remove('active');
+      applyFilterToCards();
+    });
+  }
+
+  if (filterFavoritesBtn) {
+    filterFavoritesBtn.addEventListener('click', () => {
+      triggerHaptic('light');
+      currentFilter = 'favorites';
+      filterFavoritesBtn.classList.add('active');
+      if (filterAllBtn) filterAllBtn.classList.remove('active');
       if (filterActiveBtn) filterActiveBtn.classList.remove('active');
       applyFilterToCards();
     });
@@ -365,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentFilter = 'active';
       filterActiveBtn.classList.add('active');
       if (filterAllBtn) filterAllBtn.classList.remove('active');
+      if (filterFavoritesBtn) filterFavoritesBtn.classList.remove('active');
       applyFilterToCards();
     });
   }
@@ -564,8 +740,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // SETTINGS & OLED TRUE BLACK TOGGLE
+  // SETTINGS: HEADPHONE DISCONNECT & OLED
   // ==========================================
+  const disconnectToggle = document.getElementById('disconnect-toggle');
+  if (disconnectToggle) {
+    disconnectToggle.checked = engine.pauseOnDisconnect;
+    disconnectToggle.addEventListener('change', (e) => {
+      triggerHaptic('light');
+      engine.pauseOnDisconnect = e.target.checked;
+      localStorage.setItem('velvet_pause_on_disconnect', e.target.checked ? 'true' : 'false');
+    });
+  }
+
   const oledToggle = document.getElementById('oled-toggle');
   const isOledStored = localStorage.getItem('velvet_oled') === 'true';
   if (isOledStored) {
@@ -574,6 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   oledToggle.addEventListener('change', (e) => {
+    triggerHaptic('light');
     if (e.target.checked) {
       document.body.classList.add('oled-mode');
       localStorage.setItem('velvet_oled', 'true');

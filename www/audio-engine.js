@@ -31,7 +31,7 @@ class VelvetAudioEngine {
     this.fadeDurationSec = 300; // 5 min fade out
     this.initialVolumesBeforeFade = new Map();
 
-    // Sound definitions and nodes
+    // Sound definitions and nodes (16 procedural soundscapes)
     this.sounds = {
       rain: {
         id: 'rain',
@@ -41,6 +41,7 @@ class VelvetAudioEngine {
         category: 'nature',
         active: false,
         volume: 0.65,
+        tone: 'natural',
         nodes: {}
       },
       thunder: {
@@ -51,6 +52,7 @@ class VelvetAudioEngine {
         category: 'nature',
         active: false,
         volume: 0.40,
+        tone: 'natural',
         nodes: {}
       },
       campfire: {
@@ -61,6 +63,7 @@ class VelvetAudioEngine {
         category: 'nature',
         active: false,
         volume: 0.45,
+        tone: 'natural',
         nodes: {}
       },
       brown: {
@@ -71,6 +74,7 @@ class VelvetAudioEngine {
         category: 'noise',
         active: false,
         volume: 0.50,
+        tone: 'natural',
         nodes: {}
       },
       crickets: {
@@ -81,6 +85,7 @@ class VelvetAudioEngine {
         category: 'nature',
         active: false,
         volume: 0.30,
+        tone: 'natural',
         nodes: {}
       },
       ocean: {
@@ -91,6 +96,7 @@ class VelvetAudioEngine {
         category: 'nature',
         active: false,
         volume: 0.45,
+        tone: 'natural',
         nodes: {}
       },
       wind: {
@@ -101,6 +107,7 @@ class VelvetAudioEngine {
         category: 'nature',
         active: false,
         volume: 0.35,
+        tone: 'natural',
         nodes: {}
       },
       binaural: {
@@ -111,6 +118,7 @@ class VelvetAudioEngine {
         category: 'binaural',
         active: false,
         volume: 0.35,
+        tone: 'natural',
         nodes: {}
       },
       fan: {
@@ -121,6 +129,84 @@ class VelvetAudioEngine {
         category: 'noise',
         active: false,
         volume: 0.40,
+        tone: 'natural',
+        nodes: {}
+      },
+      raintent: {
+        id: 'raintent',
+        name: 'Rain on Tent',
+        icon: '⛺',
+        desc: 'Muffled raindrops drumming on canvas tent',
+        category: 'nature',
+        active: false,
+        volume: 0.55,
+        tone: 'natural',
+        nodes: {}
+      },
+      rainroof: {
+        id: 'rainroof',
+        name: 'Rain on Metal Roof',
+        icon: '🏠',
+        desc: 'Crisp pinging rainfall on tin roof',
+        category: 'nature',
+        active: false,
+        volume: 0.45,
+        tone: 'natural',
+        nodes: {}
+      },
+      brook: {
+        id: 'brook',
+        name: 'Babbling Brook',
+        icon: '🏞️',
+        desc: 'Fresh alpine stream flowing over river pebbles',
+        category: 'nature',
+        active: false,
+        volume: 0.50,
+        tone: 'natural',
+        nodes: {}
+      },
+      frogs: {
+        id: 'frogs',
+        name: 'Twilight Frogs',
+        icon: '🐸',
+        desc: 'Nocturnal pond chorus and gentle bullfrogs',
+        category: 'nature',
+        active: false,
+        volume: 0.35,
+        tone: 'natural',
+        nodes: {}
+      },
+      pink: {
+        id: 'pink',
+        name: 'Soothing Pink Noise',
+        icon: '🌸',
+        desc: 'Balanced 1/f spectrum for tinnitus & deep sleep',
+        category: 'noise',
+        active: false,
+        volume: 0.50,
+        tone: 'natural',
+        nodes: {}
+      },
+      airplane: {
+        id: 'airplane',
+        name: 'Airplane Cabin Hum',
+        icon: '✈️',
+        desc: 'Deep jet engine drone and cabin ventilation',
+        category: 'noise',
+        active: false,
+        volume: 0.45,
+        tone: 'natural',
+        nodes: {}
+      },
+      alpha: {
+        id: 'alpha',
+        name: 'Alpha Focus (10Hz)',
+        icon: '⚡',
+        desc: 'Binaural flow-state beat for ADHD & study',
+        category: 'binaural',
+        active: false,
+        volume: 0.40,
+        tone: 'natural',
         nodes: {}
       }
     };
@@ -137,6 +223,14 @@ class VelvetAudioEngine {
     this.silentAudio = null;
     this.mediaSessionConfigured = false;
     this.timerEndTime = 0;
+
+    // Headphone Disconnect Protection (Bedroom sleep safety)
+    this.pauseOnDisconnect = true;
+    try {
+      const stored = localStorage.getItem('velvet_pause_on_disconnect');
+      if (stored !== null) this.pauseOnDisconnect = (stored === 'true');
+    } catch (e) {}
+    this._setupAudioDeviceListener();
   }
 
   /**
@@ -253,6 +347,23 @@ class VelvetAudioEngine {
   }
 
   /**
+   * Sets up Headphone / Bluetooth disconnect detection
+   * Prevents waking sleeping partners/children if Bluetooth turns off
+   */
+  _setupAudioDeviceListener() {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', async () => {
+        if (!this.pauseOnDisconnect || !this.isPlaying) return;
+        // On mobile, disconnection of BT headset or 3.5mm plug emits devicechange
+        this.pauseAll();
+        if (typeof window.onVelvetEnginePlayStateChange === 'function') {
+          window.onVelvetEnginePlayStateChange(false, 'headphone_disconnected');
+        }
+      });
+    }
+  }
+
+  /**
    * Generates high-fidelity White, Pink, and Brown Noise buffers
    */
   _generateNoiseBuffers() {
@@ -320,45 +431,112 @@ class VelvetAudioEngine {
     sound.active = true;
     const now = this.ctx.currentTime;
 
+    // Create tone shaping filter (Deep / Natural / Crisp)
+    const toneFilter = this.ctx.createBiquadFilter();
+    sound.nodes.toneFilter = toneFilter;
+    this._applyToneToFilter(toneFilter, sound.tone || 'natural');
+
     // Create channel gain node with smooth fade-in
     const gainNode = this.ctx.createGain();
     gainNode.gain.setValueAtTime(0.001, now);
     gainNode.gain.exponentialRampToValueAtTime(Math.max(0.001, sound.volume), now + 0.35);
+
+    // Route: Tone Filter -> Gain Node -> Master Gain
+    toneFilter.connect(gainNode);
     gainNode.connect(this.masterGain);
     sound.nodes.gain = gainNode;
 
     switch (id) {
       case 'rain':
-        this._buildRainGraph(sound, gainNode);
+        this._buildRainGraph(sound, toneFilter);
         break;
       case 'thunder':
-        this._buildThunderGraph(sound, gainNode);
+        this._buildThunderGraph(sound, toneFilter);
         break;
       case 'campfire':
-        this._buildCampfireGraph(sound, gainNode);
+        this._buildCampfireGraph(sound, toneFilter);
         break;
       case 'brown':
-        this._buildBrownGraph(sound, gainNode);
+        this._buildBrownGraph(sound, toneFilter);
         break;
       case 'crickets':
-        this._buildCricketsGraph(sound, gainNode);
+        this._buildCricketsGraph(sound, toneFilter);
         break;
       case 'ocean':
-        this._buildOceanGraph(sound, gainNode);
+        this._buildOceanGraph(sound, toneFilter);
         break;
       case 'wind':
-        this._buildWindGraph(sound, gainNode);
+        this._buildWindGraph(sound, toneFilter);
         break;
       case 'binaural':
-        this._buildBinauralGraph(sound, gainNode);
+        this._buildBinauralGraph(sound, toneFilter);
         break;
       case 'fan':
-        this._buildFanGraph(sound, gainNode);
+        this._buildFanGraph(sound, toneFilter);
+        break;
+      case 'raintent':
+        this._buildRainTentGraph(sound, toneFilter);
+        break;
+      case 'rainroof':
+        this._buildRainRoofGraph(sound, toneFilter);
+        break;
+      case 'brook':
+        this._buildBrookGraph(sound, toneFilter);
+        break;
+      case 'frogs':
+        this._buildFrogsGraph(sound, toneFilter);
+        break;
+      case 'pink':
+        this._buildPinkGraph(sound, toneFilter);
+        break;
+      case 'airplane':
+        this._buildAirplaneGraph(sound, toneFilter);
+        break;
+      case 'alpha':
+        this._buildAlphaGraph(sound, toneFilter);
         break;
     }
 
     this.isPlaying = true;
     this._syncMediaSession(true);
+  }
+
+  /**
+   * Applies tone equalization to a sound node filter
+   * Modes:
+   * - 'deep': warm, muted highs (smooth lowpass roll-off at 1100Hz)
+   * - 'natural': clean flat bypass
+   * - 'crisp': enhanced brightness and air (+4.5 dB high-shelf at 2800Hz)
+   */
+  _applyToneToFilter(filter, tone) {
+    if (!filter || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    filter.gain.cancelScheduledValues(now);
+    filter.frequency.cancelScheduledValues(now);
+
+    if (tone === 'deep') {
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1100, now);
+      filter.Q.setValueAtTime(0.7, now);
+    } else if (tone === 'crisp') {
+      filter.type = 'highshelf';
+      filter.frequency.setValueAtTime(2800, now);
+      filter.gain.setValueAtTime(4.5, now);
+    } else {
+      filter.type = 'allpass';
+    }
+  }
+
+  /**
+   * Adjusts the tone color of an active or inactive sound
+   */
+  setSoundTone(id, toneMode) {
+    const sound = this.sounds[id];
+    if (!sound) return;
+    sound.tone = toneMode;
+    if (sound.nodes && sound.nodes.toneFilter && this.ctx) {
+      this._applyToneToFilter(sound.nodes.toneFilter, toneMode);
+    }
   }
 
   /**
@@ -396,6 +574,9 @@ class VelvetAudioEngine {
     }
     if (sound.nodes.intervals) {
       sound.nodes.intervals.forEach(id => clearInterval(id));
+    }
+    if (sound.nodes.toneFilter) {
+      try { sound.nodes.toneFilter.disconnect(); } catch (e) {}
     }
     if (sound.nodes.gain) {
       try { sound.nodes.gain.disconnect(); } catch (e) {}
@@ -863,6 +1044,441 @@ class VelvetAudioEngine {
     sources.push(humOsc);
 
     sound.nodes.sources = sources;
+  }
+
+  /**
+   * 10. RAIN ON CANVAS TENT SYNTHESIS GRAPH
+   * Muffled, hollow resonant rainfall drumming against taut tent canvas
+   */
+  _buildRainTentGraph(sound, outputGain) {
+    const sources = [];
+
+    // Continuous muffled rain texture
+    const rainSrc = this._createBufferSource(this.pinkNoiseBuffer);
+    const bandpass = this.ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.setValueAtTime(520, this.ctx.currentTime); // Hollow cavity resonance
+    bandpass.Q.setValueAtTime(1.1, this.ctx.currentTime);
+
+    const lowpass = this.ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(1600, this.ctx.currentTime);
+
+    const texGain = this.ctx.createGain();
+    texGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+
+    rainSrc.connect(bandpass);
+    bandpass.connect(lowpass);
+    lowpass.connect(texGain);
+    texGain.connect(outputGain);
+
+    rainSrc.start();
+    sources.push(rainSrc);
+
+    // Canvas fabric droplet thuds (low pitched muffled impacts)
+    const dripInterval = setInterval(() => {
+      if (!sound.active || !this.ctx) return;
+      if (Math.random() > 0.35) {
+        this._playTentDroplet(outputGain);
+      }
+    }, 380);
+
+    sound.nodes.sources = sources;
+    sound.nodes.intervals = [dripInterval];
+  }
+
+  _playTentDroplet(destGain) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    // Muffled canvas thud pitch envelope: 280Hz -> 130Hz
+    const startFreq = 280 + Math.random() * 90;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(startFreq * 0.45, now + 0.05);
+
+    gain.gain.setValueAtTime(0.045 + Math.random() * 0.035, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+
+    osc.connect(gain);
+    gain.connect(destGain);
+
+    osc.start(now);
+    osc.stop(now + 0.08);
+  }
+
+  /**
+   * 11. RAIN ON METAL ROOF SYNTHESIS GRAPH
+   * Crisp, pinging raindrops striking corrugated tin / zinc metal roof
+   */
+  _buildRainRoofGraph(sound, outputGain) {
+    const sources = [];
+
+    // Continuous metallic rain texture
+    const noiseSrc = this._createBufferSource(this.whiteNoiseBuffer);
+    const bandpass = this.ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.setValueAtTime(2600, this.ctx.currentTime);
+    bandpass.Q.setValueAtTime(1.8, this.ctx.currentTime);
+
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+
+    noiseSrc.connect(bandpass);
+    bandpass.connect(noiseGain);
+    noiseGain.connect(outputGain);
+
+    noiseSrc.start();
+    sources.push(noiseSrc);
+
+    // Rapid metallic ping strikes
+    const pingInterval = setInterval(() => {
+      if (!sound.active || !this.ctx) return;
+      const count = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => this._playMetalPing(outputGain), Math.random() * 220);
+      }
+    }, 240);
+
+    sound.nodes.sources = sources;
+    sound.nodes.intervals = [pingInterval];
+  }
+
+  _playMetalPing(destGain) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    // High resonant metallic ping (2200Hz - 3600Hz)
+    const pingFreq = 2200 + Math.random() * 1400;
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(pingFreq, now);
+
+    gain.gain.setValueAtTime(0.035 + Math.random() * 0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+    osc.connect(gain);
+    gain.connect(destGain);
+
+    osc.start(now);
+    osc.stop(now + 0.05);
+  }
+
+  /**
+   * 12. BABBLING BROOK SYNTHESIS GRAPH
+   * Liquid stream rushing and bubbling over smooth river pebbles
+   */
+  _buildBrookGraph(sound, outputGain) {
+    const sources = [];
+
+    // Flowing stream body using dual bandpassed pink noise
+    const streamSrc = this._createBufferSource(this.pinkNoiseBuffer);
+    const filter1 = this.ctx.createBiquadFilter();
+    filter1.type = 'bandpass';
+    filter1.frequency.setValueAtTime(620, this.ctx.currentTime);
+    filter1.Q.setValueAtTime(2.2, this.ctx.currentTime);
+
+    const streamSrc2 = this._createBufferSource(this.pinkNoiseBuffer);
+    const filter2 = this.ctx.createBiquadFilter();
+    filter2.type = 'bandpass';
+    filter2.frequency.setValueAtTime(1250, this.ctx.currentTime);
+    filter2.Q.setValueAtTime(2.5, this.ctx.currentTime);
+
+    // Dual slow LFO water current modulations
+    const lfo1 = this.ctx.createOscillator();
+    lfo1.frequency.setValueAtTime(0.4, this.ctx.currentTime);
+    const lfoGain1 = this.ctx.createGain();
+    lfoGain1.gain.setValueAtTime(180, this.ctx.currentTime);
+    lfo1.connect(lfoGain1);
+    lfoGain1.connect(filter1.frequency);
+
+    const lfo2 = this.ctx.createOscillator();
+    lfo2.frequency.setValueAtTime(0.65, this.ctx.currentTime);
+    const lfoGain2 = this.ctx.createGain();
+    lfoGain2.gain.setValueAtTime(240, this.ctx.currentTime);
+    lfo2.connect(lfoGain2);
+    lfoGain2.connect(filter2.frequency);
+
+    const brookGain = this.ctx.createGain();
+    brookGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+
+    streamSrc.connect(filter1);
+    filter1.connect(brookGain);
+    streamSrc2.connect(filter2);
+    filter2.connect(brookGain);
+    brookGain.connect(outputGain);
+
+    streamSrc.start();
+    streamSrc2.start();
+    lfo1.start();
+    lfo2.start();
+    sources.push(streamSrc, streamSrc2, lfo1, lfo2);
+
+    // Liquid water bubble plops
+    const bubbleInterval = setInterval(() => {
+      if (!sound.active || !this.ctx) return;
+      if (Math.random() > 0.3) {
+        this._playWaterBubble(outputGain);
+      }
+    }, 280);
+
+    sound.nodes.sources = sources;
+    sound.nodes.intervals = [bubbleInterval];
+  }
+
+  _playWaterBubble(destGain) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    const startFreq = 450 + Math.random() * 450;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(startFreq * 1.5, now + 0.04);
+
+    gain.gain.setValueAtTime(0.04 + Math.random() * 0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+    osc.connect(gain);
+    gain.connect(destGain);
+
+    osc.start(now);
+    osc.stop(now + 0.07);
+  }
+
+  /**
+   * 13. TWILIGHT FROGS SYNTHESIS GRAPH
+   * Rhythmic nocturnal marsh frogs and peaceful pond chorus
+   */
+  _buildFrogsGraph(sound, outputGain) {
+    const sources = [];
+
+    // Distant nocturnal marsh air bed
+    const marshSrc = this._createBufferSource(this.pinkNoiseBuffer);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(450, this.ctx.currentTime);
+
+    const marshGain = this.ctx.createGain();
+    marshGain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+
+    marshSrc.connect(filter);
+    filter.connect(marshGain);
+    marshGain.connect(outputGain);
+    marshSrc.start();
+    sources.push(marshSrc);
+
+    // Rhythmic deep bullfrog ribbits
+    const frogInterval = setInterval(() => {
+      if (!sound.active || !this.ctx) return;
+      if (Math.random() > 0.3) {
+        this._playBullfrogCroak(outputGain);
+      }
+    }, 3200);
+
+    // High chirp tree frog peepers
+    const peeperInterval = setInterval(() => {
+      if (!sound.active || !this.ctx) return;
+      if (Math.random() > 0.4) {
+        this._playTreeFrogPeeper(outputGain);
+      }
+    }, 1800);
+
+    sound.nodes.sources = sources;
+    sound.nodes.intervals = [frogInterval, peeperInterval];
+  }
+
+  _playBullfrogCroak(destGain) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    const croakCount = Math.random() > 0.5 ? 2 : 1;
+
+    for (let i = 0; i < croakCount; i++) {
+      const croakTime = now + (i * 0.22);
+      const osc = this.ctx.createOscillator();
+      const formant = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      const baseFreq = 160 + Math.random() * 40;
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(baseFreq, croakTime);
+      osc.frequency.linearRampToValueAtTime(baseFreq * 0.85, croakTime + 0.14);
+
+      formant.type = 'bandpass';
+      formant.frequency.setValueAtTime(480, croakTime);
+      formant.Q.setValueAtTime(3.5, croakTime);
+
+      gain.gain.setValueAtTime(0.0001, croakTime);
+      gain.gain.linearRampToValueAtTime(0.09, croakTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, croakTime + 0.15);
+
+      osc.connect(formant);
+      formant.connect(gain);
+      gain.connect(destGain);
+
+      osc.start(croakTime);
+      osc.stop(croakTime + 0.16);
+    }
+  }
+
+  _playTreeFrogPeeper(destGain) {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    const freq = 2100 + Math.random() * 300;
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.linearRampToValueAtTime(freq + 150, now + 0.04);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.04, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+    osc.connect(gain);
+    gain.connect(destGain);
+
+    osc.start(now);
+    osc.stop(now + 0.07);
+  }
+
+  /**
+   * 14. SOOTHING PINK NOISE GRAPH
+   * Clinical 1/f power spectrum for tinnitus masking and non-intrusive sound isolation
+   */
+  _buildPinkGraph(sound, outputGain) {
+    const src = this._createBufferSource(this.pinkNoiseBuffer);
+
+    // Smooth gentle rolloff above 6800Hz to eliminate harshness
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(6800, this.ctx.currentTime);
+    filter.Q.setValueAtTime(0.5, this.ctx.currentTime);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(outputGain);
+
+    src.start();
+    sound.nodes.sources = [src];
+  }
+
+  /**
+   * 15. AIRPLANE CABIN HUM GRAPH
+   * Deep pressurized cabin rumble + twin jet engine drone + ventilation hiss
+   */
+  _buildAirplaneGraph(sound, outputGain) {
+    const sources = [];
+
+    // 1. Deep fuselage rumble (Brownian noise lowpassed at 110Hz)
+    const rumbleSrc = this._createBufferSource(this.brownNoiseBuffer);
+    const rumbleFilter = this.ctx.createBiquadFilter();
+    rumbleFilter.type = 'lowpass';
+    rumbleFilter.frequency.setValueAtTime(110, this.ctx.currentTime);
+    rumbleFilter.Q.setValueAtTime(1.2, this.ctx.currentTime);
+
+    const rumbleGain = this.ctx.createGain();
+    rumbleGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+
+    rumbleSrc.connect(rumbleFilter);
+    rumbleFilter.connect(rumbleGain);
+    rumbleGain.connect(outputGain);
+    rumbleSrc.start();
+    sources.push(rumbleSrc);
+
+    // 2. Twin Jet Engine harmonics (78 Hz + 82 Hz binaural drone)
+    const engine1 = this.ctx.createOscillator();
+    engine1.type = 'triangle';
+    engine1.frequency.setValueAtTime(78, this.ctx.currentTime);
+
+    const engine2 = this.ctx.createOscillator();
+    engine2.type = 'triangle';
+    engine2.frequency.setValueAtTime(82, this.ctx.currentTime);
+
+    const engineGain = this.ctx.createGain();
+    engineGain.gain.setValueAtTime(0.045, this.ctx.currentTime);
+
+    engine1.connect(engineGain);
+    engine2.connect(engineGain);
+    engineGain.connect(outputGain);
+
+    engine1.start();
+    engine2.start();
+    sources.push(engine1, engine2);
+
+    // 3. Cabin overhead air vent hiss
+    const ventSrc = this._createBufferSource(this.pinkNoiseBuffer);
+    const ventFilter = this.ctx.createBiquadFilter();
+    ventFilter.type = 'bandpass';
+    ventFilter.frequency.setValueAtTime(550, this.ctx.currentTime);
+    ventFilter.Q.setValueAtTime(0.8, this.ctx.currentTime);
+
+    const ventGain = this.ctx.createGain();
+    ventGain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+
+    ventSrc.connect(ventFilter);
+    ventFilter.connect(ventGain);
+    ventGain.connect(outputGain);
+    ventSrc.start();
+    sources.push(ventSrc);
+
+    sound.nodes.sources = sources;
+  }
+
+  /**
+   * 16. ALPHA FOCUS WAVES GRAPH (10 Hz Binaural Beat)
+   * 140 Hz (L) & 150 Hz (R) binaural beat for ADHD flow, studying, and calm alertness
+   */
+  _buildAlphaGraph(sound, outputGain) {
+    const baseFreq = 140.0;
+    const alphaBeat = 10.0;
+
+    const merger = this.ctx.createChannelMerger(2);
+
+    // Left Ear: 140 Hz
+    const oscLeft = this.ctx.createOscillator();
+    oscLeft.type = 'sine';
+    oscLeft.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+
+    // Right Ear: 150 Hz (140 + 10 Hz)
+    const oscRight = this.ctx.createOscillator();
+    oscRight.type = 'sine';
+    oscRight.frequency.setValueAtTime(baseFreq + alphaBeat, this.ctx.currentTime);
+
+    oscLeft.connect(merger, 0, 0);
+    oscRight.connect(merger, 0, 1);
+
+    const beatGain = this.ctx.createGain();
+    beatGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+
+    // Warm soft noise cushion
+    const cushionSrc = this._createBufferSource(this.pinkNoiseBuffer);
+    const cushionFilter = this.ctx.createBiquadFilter();
+    cushionFilter.type = 'lowpass';
+    cushionFilter.frequency.setValueAtTime(350, this.ctx.currentTime);
+    const cushionGain = this.ctx.createGain();
+    cushionGain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+
+    cushionSrc.connect(cushionFilter);
+    cushionFilter.connect(cushionGain);
+
+    merger.connect(beatGain);
+    beatGain.connect(outputGain);
+    cushionGain.connect(outputGain);
+
+    oscLeft.start();
+    oscRight.start();
+    cushionSrc.start();
+
+    sound.nodes.sources = [oscLeft, oscRight, cushionSrc];
   }
 
   // ==========================================
